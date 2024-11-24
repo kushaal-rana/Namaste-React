@@ -1,60 +1,44 @@
 import RestaurantCard from "./RestaurantCard";
 import resList from "../utils/mockData";
-import {useState} from "react";
+import {useEffect, useState} from "react";
+import Shimmer from "./Shimmer";
 const Body = () => {
-  const [listOfRestaurants, setListOfRestaurants] = useState(resList);
-  // let listOfRestaurants = [
-  //   {
-  //     type: 'restaurant',
-  //     data: {
-  //       id: '334475',
-  //       name: 'KFC',
-  //       cloudinaryImageId: 'bdcd233971b7c81bf77e1fa4471280eb',
-  //       cuisines: ['Burgers', 'Biryani', 'American', 'Snacks', 'Fast Food'],
-  //       costForTwo: 40000,
-  //       deliveryTime: 36,
-  //       avgRating: '3.8',
-  //     },
-  //   },
-  //   {
-  //     type: 'restaurant',
-  //     data: {
-  //       id: '334476',
-  //       name: 'Dominos',
-  //       cloudinaryImageId: 'bdcd233971b7c81bf77e1fa4471280eb',
-  //       cuisines: ['Burgers', 'Biryani', 'American', 'Snacks', 'Fast Food'],
-  //       costForTwo: 40000,
-  //       deliveryTime: 36,
-  //       avgRating: '4.8',
-  //     },
-  //   },
-  //   {
-  //     type: 'restaurant',
-  //     data: {
-  //       id: '334477',
-  //       name: 'McDonals',
-  //       cloudinaryImageId: 'bdcd233971b7c81bf77e1fa4471280eb',
-  //       cuisines: ['Burgers', 'Biryani', 'American', 'Snacks', 'Fast Food'],
-  //       costForTwo: 40000,
-  //       deliveryTime: 36,
-  //       avgRating: '4.2',
-  //     },
-  //   },
-  // ];
+  const [listOfRestaurants, setListOfRestaurants] = useState([]);
+  const [filteredRestaurants, setFilteredRestaurants] = useState(listOfRestaurants);
+  const [searchText, setSearchText] = useState("");
+  console.log("Before Use Effect")
+  useEffect(() => {
+    fetchData();  
+  }, []);
 
-  return (
+  const fetchData = async () => {
+    const data = await fetch("https://www.swiggy.com/dapi/restaurants/list/v5?lat=12.9715987&lng=77.5945627&is-seo-homepage-enabled=true&page_type=DESKTOP_WEB_LISTING#");
+    const json = await data.json();
+    // console.log(json?.data?.cards[4]?.card?.card?.gridElements?.infoWithStyle.restaurants);
+    setListOfRestaurants(json?.data?.cards[4]?.card?.card?.gridElements?.infoWithStyle.restaurants);
+    setFilteredRestaurants(json?.data?.cards[4]?.card?.card?.gridElements?.infoWithStyle.restaurants);
+  }
+
+
+  const searchRestaurants = () => {
+    console.log(listOfRestaurants);
+    debugger
+    let filteredRestaurants = listOfRestaurants.filter((res) => res.info.name.toLowerCase().includes(searchText.toLowerCase()));
+    setFilteredRestaurants(filteredRestaurants);
+  }
+
+  return listOfRestaurants.length === 0 ? <Shimmer /> : (
       <div className="body">
         <div className="search">
-          <input type="text" placeholder="Search" className="search-box" />
-          <button className="search-btn">Search</button>
-
+          <input type="text" placeholder="Search" className="search-box" value = {searchText} onChange={(e) => setSearchText(e.target.value)}/>
+          <button className="search-btn" onClick={searchRestaurants}>Search</button>
 
 
           <button className="filterbtn" 
           onClick={()=> {
-            filteredRestaurants = listOfRestaurants.filter((res) => res.data.avgRating > 4.2);
-            console.log(listOfRestaurants);
-            setListOfRestaurants(filteredRestaurants);
+            let filteredRestaurants = listOfRestaurants.filter((res) => res.info.avgRating > 4.0);
+            console.log(filteredRestaurants);
+            setFilteredRestaurants(filteredRestaurants);
           }}
 
             
@@ -62,10 +46,9 @@ const Body = () => {
             >Top Rated Restaurant</button>
         </div>
 
-
         <div className="restaurant-container">
-          {listOfRestaurants.map((restaurant) => (
-            <RestaurantCard key={restaurant.data.id} resData={restaurant}/>
+          {filteredRestaurants.map((restaurant) => (
+            <RestaurantCard key={parseInt(restaurant?.info?.id)} resData={restaurant}/>
           ))}
         </div>
       </div>
